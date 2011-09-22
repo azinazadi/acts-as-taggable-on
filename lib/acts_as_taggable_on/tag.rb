@@ -35,6 +35,10 @@ module ActsAsTaggableOn
       where(list.map { |tag| sanitize_sql(["name #{like_operator} ?", "%#{tag.to_s}%"]) }.join(" OR "))
     end
 
+    def self.exact_any(list)
+      where(list.map { |tag| sanitize_sql(["name = ?", tag.to_s]) }.join(" OR "))
+    end
+
     ### CLASS METHODS:
 
     def self.find_or_create_with_like_by_name(name)
@@ -46,14 +50,18 @@ module ActsAsTaggableOn
 
       return [] if list.empty?
 
-      existing_tags = Tag.named_any(list).all
-      new_tag_names = list.reject do |name| 
+      existing_exact_tags = Tag.exact_any(list).all
+      list -= existing_exact_tags.map &:name
+      return existing_exact_tags if list.empty?
+
+      existing_similar_tags = Tag.named_any(list).all
+      new_tag_names = list.reject do |name|
                         name = comparable_name(name)
-                        existing_tags.any? { |tag| comparable_name(tag.name) == name }
+                        existing_similar_tags.any? { |tag| comparable_name(tag.name) == name }
                       end
       created_tags  = new_tag_names.map { |name| Tag.create(:name => name) }
 
-      existing_tags + created_tags
+      existing_exact_tags + existing_similar_tags + created_tags
     end
 
     ### INSTANCE METHODS:

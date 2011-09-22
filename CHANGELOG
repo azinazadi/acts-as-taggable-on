@@ -1,3 +1,6 @@
+== 2011-22-09
+* resolved bug of adding unwanted similar tags if they are presented
+
 == 2011-28-06
 * resolved bug in tag cloud max count devision by zero
 
